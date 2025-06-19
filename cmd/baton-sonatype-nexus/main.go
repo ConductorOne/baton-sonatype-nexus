@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"os"
 
-	cfg "github.com/conductorone/baton-sonatype-nexus/pkg/config"
-	"github.com/conductorone/baton-sonatype-nexus/pkg/connector"
 	"github.com/conductorone/baton-sdk/pkg/config"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sdk/pkg/field"
 	"github.com/conductorone/baton-sdk/pkg/types"
+	cfg "github.com/conductorone/baton-sonatype-nexus/pkg/config"
+	"github.com/conductorone/baton-sonatype-nexus/pkg/connector"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +26,7 @@ func main() {
 	_, cmd, err := config.DefineConfiguration(
 		ctx,
 		"baton-sonatype-nexus",
-		getConnector[*cfg.SonatypeNexus],
+		getConnector,
 		cfg.Config,
 	)
 	if err != nil {
@@ -42,14 +43,17 @@ func main() {
 	}
 }
 
-// TODO: After the config has been generated, update this function to use the config.
-func getConnector[T field.Configurable](ctx context.Context, config T) (types.ConnectorServer, error) {
+func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, error) {
 	l := ctxzap.Extract(ctx)
-	if err := field.Validate(cfg.Config, config); err != nil {
+
+	if err := field.Validate(cfg.Config, v); err != nil {
 		return nil, err
 	}
 
-	cb, err := connector.New(ctx)
+	host := v.GetString(cfg.HostField.FieldName)
+	username := v.GetString(cfg.UsernameField.FieldName)
+	password := v.GetString(cfg.PasswordField.FieldName)
+	cb, err := connector.New(ctx, host, username, password)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
 		return nil, err

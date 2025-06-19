@@ -6,8 +6,18 @@ import (
 
 var (
 	// Add the SchemaFields for the Config.
-	configField         = field.StringField("configField")
-	ConfigurationFields = []field.SchemaField{configField}
+	configField = field.StringField("configField")
+	HostField   = field.StringField("host",
+		field.WithDescription("Nexus host URL"),
+		field.WithDefaultValue("http://localhost:8081"),
+		field.WithRequired(true))
+	UsernameField = field.StringField("username",
+		field.WithDescription("Nexus username"),
+		field.WithRequired(true))
+	PasswordField = field.StringField("password",
+		field.WithDescription("Nexus password"),
+		field.WithRequired(true))
+	ConfigurationFields = []field.SchemaField{configField, HostField, UsernameField, PasswordField}
 
 	// FieldRelationships defines relationships between the ConfigurationFields that can be automatically validated.
 	// For example, a username and password can be required together, or an access token can be
