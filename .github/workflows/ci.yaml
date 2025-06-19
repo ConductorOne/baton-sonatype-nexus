@@ -41,31 +41,46 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BATON_LOG_LEVEL: debug
-      BATON_HOST: ${{ secrets.NEXUS_HOST }}
-      BATON_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      BATON_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-      NEXUS_HOST: ${{ secrets.NEXUS_HOST }}
-      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      BATON_HOST: 'http://localhost:8081'
+      BATON_USERNAME: 'admin'
+      BATON_PASSWORD: 'admin123'
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.22.x
       - name: Checkout code
         uses: actions/checkout@v4
-      # Install any dependencies here (or delete this)
-      # - name: Install postgres client
-      #   run: sudo apt install postgresql-client
-      # Run any fixture setup here (or delete this)
-      # - name: Import sql into postgres
-      #   run: psql -h localhost --user postgres -f environment.sql
-      #   env:
-      #     PGPASSWORD: secretpassword
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install dependencies
+        run: go mod download
+
       - name: Build baton-sonatype-nexus
-        run: go build ./cmd/baton-sonatype-nexus
+        run: go build -o baton-sonatype-nexus .
+
+      - name: Start Nexus
+        run: |
+          docker run -d --name nexus-test -p 8081:8081 sonatype/nexus3:3.54.0
+          echo "Nexus container started"
+
+      - name: Wait for Nexus to be ready
+        run: |
+          echo "Waiting for Nexus to be ready..."
+          timeout 300 bash -c 'until curl -f http://localhost:8081/service/rest/v1/status; do sleep 5; done'
+          echo "Nexus is ready!"
+
       - name: Run baton-sonatype-nexus
         run: ./baton-sonatype-nexus
 
-      - name: Install baton
-        run: ./scripts/get-baton.sh && mv baton /usr/local/bin
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop nexus-test || true
+          docker rm nexus-test || true
