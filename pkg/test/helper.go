@@ -107,7 +107,7 @@ func ReadFile(fileName string) (string, error) {
 		}
 	}
 
-	// If none of the paths work, return the error from the first attempt
+	// If none of the paths work, return the error from the first attempt.
 	data, err := os.ReadFile("pkg/test/" + fileName)
 	if err != nil {
 		return "", err
