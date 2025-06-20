@@ -1,0 +1,27 @@
+[
+    {
+        "id": "nx-admin",
+        "source": "default",
+        "name": "nx-admin",
+        "description": "Administrator Role",
+        "readOnly": true,
+        "privileges": [
+            "nx-all"
+        ],
+        "roles": []
+    },
+    {
+        "id": "nx-anonymous",
+        "source": "default",
+        "name": "nx-anonymous",
+        "description": "Anonymous Role",
+        "readOnly": true,
+        "privileges": [
+            "nx-healthcheck-read",
+            "nx-search-read",
+            "nx-repository-view-*-*-read",
+            "nx-repository-view-*-*-browse"
+        ],
+        "roles": []
+    }
+]

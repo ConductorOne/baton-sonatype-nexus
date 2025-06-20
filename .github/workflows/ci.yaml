@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Run linters
-        uses: golangci/golangci-lint-action@v5
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           args: --timeout=3m
@@ -39,66 +39,59 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # Define any services needed for the test suite (or delete this section)
-    # services:
-    #   postgres:
-    #     image: postgres:16
-    #     ports:
-    #       - "5432:5432"
-    #     env:
-    #       POSTGRES_PASSWORD: secretpassword
     env:
       BATON_LOG_LEVEL: debug
-      # Add any environment variables needed to run baton-sonatype-nexus
-      # BATON_BASE_URL: 'http://localhost:8080'
-      # BATON_ACCESS_TOKEN: 'secret_token'
-      # The following parameters are passed to grant/revoke commands
-      # Change these to the correct IDs for your test data
-      CONNECTOR_GRANT: 'grant:entitlement:group:1234:member:user:9876'
-      CONNECTOR_ENTITLEMENT: 'entitlement:group:1234:member'
-      CONNECTOR_PRINCIPAL: 'user:9876'
-      CONNECTOR_PRINCIPAL_TYPE: 'user'
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Install Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.22.x
-      - name: Checkout code
-        uses: actions/checkout@v4
-      # Install any dependencies here (or delete this)
-      # - name: Install postgres client
-      #   run: sudo apt install postgresql-client
-      # Run any fixture setup here (or delete this)
-      # - name: Import sql into postgres
-      #   run: psql -h localhost --user postgres -f environment.sql
-      #   env:
-      #     PGPASSWORD: secretpassword
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install dependencies
+        run: go mod download
+
       - name: Build baton-sonatype-nexus
-        run: go build ./cmd/baton-sonatype-nexus
+        run: go build -o baton-sonatype-nexus ./cmd/baton-sonatype-nexus
+
+      - name: Start Nexus
+        run: |
+          docker run -d --name nexus-test -p 8081:8081 sonatype/nexus3:3.54.0
+          echo "Nexus container started"
+
+      - name: Wait for Nexus to be ready
+        run: |
+          echo "Waiting for Nexus to be ready..."
+          timeout 300 bash -c 'until curl -f http://localhost:8081/service/rest/v1/status; do sleep 5; done'
+          echo "Nexus is ready!"
+
+      - name: Get Nexus admin password
+        id: nexus-password
+        run: |
+          # Wait for the admin password file to exist
+          timeout 120 bash -c 'until docker exec nexus-test test -f /nexus-data/admin.password; do sleep 5; done'
+          docker exec nexus-test cat /nexus-data/admin.password > admin.password
+          echo "password=$(cat admin.password)" >> $GITHUB_OUTPUT
+          echo "Admin password retrieved successfully"
+
       - name: Run baton-sonatype-nexus
+        env:
+          BATON_PASSWORD: ${{ steps.nexus-password.outputs.password }}
+          BATON_USERNAME: admin
+          BATON_HOST: 'http://localhost:8081'
+          BATON_LOG_LEVEL: debug
         run: ./baton-sonatype-nexus
 
-      - name: Install baton
-        run: ./scripts/get-baton.sh && mv baton /usr/local/bin
+      - name: Run tests
+        run: go test -v ./...
 
-      - name: Check for grant before revoking
-
-        run:
-          baton grants --entitlement="${{ env.CONNECTOR_ENTITLEMENT }}" --output-format=json | jq --exit-status ".grants[].principal.id.resource == \"${{ env.CONNECTOR_PRINCIPAL }}\""
-
-
-      - name: Revoke grants
-        run: ./baton-sonatype-nexus --revoke-grant="${{ env.CONNECTOR_GRANT }}"
-
-      - name: Check grant was revoked
-        run: ./baton-sonatype-nexus && baton grants --entitlement="${{ env.CONNECTOR_ENTITLEMENT }}" --output-format=json | jq --exit-status "if .grants then .grants[]?.principal.id.resource != \"${{ env.CONNECTOR_PRINCIPAL }}\" else . end"
-
-      - name: Grant entitlement
-        # Change the grant arguments to the correct IDs for your test data
-        run: ./baton-sonatype-nexus --grant-entitlement="${{ env.CONNECTOR_ENTITLEMENT }}" --grant-principal="${{ env.CONNECTOR_PRINCIPAL }}" --grant-principal-type="${{ env.CONNECTOR_PRINCIPAL_TYPE }}"
-
-      - name: Check grant was re-granted
-
-        run:
-          baton grants --entitlement="${{ env.CONNECTOR_ENTITLEMENT }}" --output-format=json | jq --exit-status ".grants[].principal.id.resource == \"${{ env.CONNECTOR_PRINCIPAL }}\""
-
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop nexus-test || true
+          docker rm nexus-test || true

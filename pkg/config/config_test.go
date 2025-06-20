@@ -14,16 +14,18 @@ func TestValidateConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:   "valid config",
+			name: "valid config",
 			config: &SonatypeNexus{
-				// TODO: Add minimal valid configuration here once Config type is generated
+				Host:     "http://localhost:8081",
+				Username: "admin",
+				Password: "admin123",
 			},
 			wantErr: false,
 		},
 		{
 			name:   "invalid config - missing required fields",
 			config: &SonatypeNexus{
-				// TODO: Add configuration with missing required fields once Config type is generated
+				// Missing required fields
 			},
 			wantErr: true,
 		},

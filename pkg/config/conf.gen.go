@@ -4,7 +4,9 @@ package config
 import "reflect" 
 
 type SonatypeNexus struct {
-	Configfield string `mapstructure:"configField"`
+	Host string `mapstructure:"host"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 func (c* SonatypeNexus) findFieldByTag(tagValue string) (any, bool) {
