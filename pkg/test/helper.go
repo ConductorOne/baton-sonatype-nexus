@@ -1,11 +1,11 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 
-	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 )
 
@@ -80,14 +80,18 @@ func (t *TestRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
 func NewTestClient(response *http.Response, err error) *client.APIClient {
 	transport := &TestRoundTripper{response: response, err: err}
 	httpClient := &http.Client{Transport: transport}
-	baseHttpClient := uhttp.NewBaseHttpClient(httpClient)
 
 	// Use test credentials for Nexus.
 	baseURL := "http://localhost:8081"
 	username := "admin"
 	password := "admin123"
 
-	return client.NewClient(baseURL, username, password, baseHttpClient)
+	c, err := client.NewClient(context.Background(), baseURL, username, password, httpClient)
+	if err != nil {
+		panic(err)
+	}
+
+	return c
 }
 
 // ReadFile reads a file from the test directory.

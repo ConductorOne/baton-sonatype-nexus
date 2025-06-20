@@ -14,7 +14,6 @@ import (
 	cfg "github.com/conductorone/baton-sonatype-nexus/pkg/config"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/connector"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -43,25 +42,43 @@ func main() {
 	}
 }
 
-func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, error) {
+func getConnector(ctx context.Context, ghc *cfg.SonatypeNexus) (types.ConnectorServer, error) {
 	l := ctxzap.Extract(ctx)
 
-	if err := field.Validate(cfg.Config, v); err != nil {
+	if err := field.Validate(cfg.Config, ghc); err != nil {
+		l.Error("error validating config", zap.Error(err))
 		return nil, err
 	}
 
-	host := v.GetString(cfg.HostField.FieldName)
-	username := v.GetString(cfg.UsernameField.FieldName)
-	password := v.GetString(cfg.PasswordField.FieldName)
+	host := ghc.GetString(cfg.HostField.FieldName)
+	if host == "" {
+		l.Error("host is required")
+		return nil, fmt.Errorf("host is required")
+	}
+
+	username := ghc.GetString(cfg.UsernameField.FieldName)
+	if username == "" {
+		l.Error("username is required")
+		return nil, fmt.Errorf("username is required")
+	}
+
+	password := ghc.GetString(cfg.PasswordField.FieldName)
+	if password == "" {
+		l.Error("password is required")
+		return nil, fmt.Errorf("password is required")
+	}
+
 	cb, err := connector.New(ctx, host, username, password)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
 		return nil, err
 	}
+
 	connector, err := connectorbuilder.NewConnector(ctx, cb)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
 		return nil, err
 	}
+
 	return connector, nil
 }

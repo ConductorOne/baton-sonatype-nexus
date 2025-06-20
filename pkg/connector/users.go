@@ -83,7 +83,7 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 	var user *client.User
 	for _, u := range users {
 		if u.UserID == userID {
-			user = &u
+			user = u
 			break
 		}
 	}

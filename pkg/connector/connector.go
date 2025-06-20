@@ -46,7 +46,10 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 
 // New returns a new instance of the connector.
 func New(ctx context.Context, baseURL, username, password string) (*Connector, error) {
-	client := client.NewClient(baseURL, username, password, nil)
+	client, err := client.NewClient(ctx, baseURL, username, password, nil)
+	if err != nil {
+		return nil, err
+	}
 	return &Connector{
 		client:      client,
 		userBuilder: newUserBuilder(client),

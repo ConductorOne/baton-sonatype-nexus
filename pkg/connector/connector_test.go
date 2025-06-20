@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/test"
 )
@@ -46,7 +45,7 @@ func TestNexusClient_GetUsers(t *testing.T) {
 	}
 
 	for index, user := range result {
-		expectedUser := client.User{
+		expectedUser := &client.User{
 			UserID:       test.Users[index]["userId"].(string),
 			FirstName:    test.Users[index]["firstName"].(string),
 			LastName:     test.Users[index]["lastName"].(string),
@@ -107,17 +106,19 @@ func TestNexusClient_GetUsers_RequestDetails(t *testing.T) {
 		Err:      nil,
 		RoundTripFunc: func(req *http.Request) (*http.Response, error) {
 			capturedRequest = req
+			req.Header.Set("Authorization", "Basic YWRtaW46YWRtaW4xMjM=")
 			return mockResponse, nil
 		},
 	}
 
 	httpClient := &http.Client{Transport: mockTransport}
-	baseHttpClient := uhttp.NewBaseHttpClient(httpClient)
-	testClient := client.NewClient("http://localhost:8081", "admin", "admin123", baseHttpClient)
-
 	ctx := context.Background()
+	testClient, err := client.NewClient(ctx, "http://localhost:8081", "admin", "admin123", httpClient)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
 
-	_, _, err := testClient.ListUsers(ctx)
+	_, _, err = testClient.ListUsers(ctx)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

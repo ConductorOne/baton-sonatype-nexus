@@ -24,7 +24,12 @@ func initClient(t *testing.T) *client.APIClient {
 		t.Skipf("Missing required environment variables: NEXUS_HOST, NEXUS_USERNAME, NEXUS_PASSWORD")
 	}
 
-	return client.NewClient(host, username, password, nil)
+	c, err := client.NewClient(ctx, host, username, password, nil)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	return c
 }
 
 func TestUserBuilderList(t *testing.T) {
