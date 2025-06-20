@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
@@ -46,9 +47,11 @@ func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, r
 	}
 
 	var errorResp NexusErrorResponse
+	var rateLimitDesc v2.RateLimitDescription
 	doOptions := []uhttp.DoOption{
 		uhttp.WithJSONResponse(res),
 		uhttp.WithErrorResponse(&errorResp),
+		uhttp.WithRatelimitData(&rateLimitDesc),
 	}
 
 	resp, err := c.wrapper.Do(request, doOptions...)
@@ -73,6 +76,7 @@ func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, r
 	}
 
 	annotation := annotations.Annotations{}
+	annotation.Append(&rateLimitDesc)
 	return resp.Header, annotation, nil
 }
 

@@ -11,16 +11,14 @@ import (
 )
 
 type Connector struct {
-	client      *client.APIClient
-	userBuilder *userBuilder
-	roleBuilder *roleBuilder
+	client *client.APIClient
 }
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
-		d.userBuilder,
-		d.roleBuilder,
+		newUserBuilder(d.client),
+		newRoleBuilder(d.client),
 	}
 }
 
@@ -46,13 +44,11 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 
 // New returns a new instance of the connector.
 func New(ctx context.Context, baseURL, username, password string) (*Connector, error) {
-	client, err := client.NewClient(ctx, baseURL, username, password, nil)
+	c, err := client.NewClient(ctx, baseURL, username, password, nil)
 	if err != nil {
 		return nil, err
 	}
 	return &Connector{
-		client:      client,
-		userBuilder: newUserBuilder(client),
-		roleBuilder: newRoleBuilder(client),
+		client: c,
 	}, nil
 }
