@@ -33,6 +33,70 @@ func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error)
 	return &v2.ConnectorMetadata{
 		DisplayName: "Sonatype Nexus",
 		Description: "Sonatype Nexus is a repository manager for Maven, npm, and other package managers.",
+		AccountCreationSchema: &v2.ConnectorAccountCreationSchema{
+			FieldMap: map[string]*v2.ConnectorAccountCreationSchema_Field{
+				"userId": {
+					DisplayName: "User ID",
+					Required:    true,
+					Description: "User ID of the user",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "John08",
+					Order:       1,
+				},
+				"firstName": {
+					DisplayName: "First Name",
+					Required:    true,
+					Description: "First Name of the user",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "John",
+					Order:       2,
+				},
+				"lastName": {
+					DisplayName: "Last Name",
+					Required:    true,
+					Description: "Last Name of the user",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "Travolta",
+					Order:       3,
+				},
+				"emailAddress": {
+					DisplayName: "Email Address",
+					Required:    true,
+					Description: "Email Address of the user",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "john.doe@example.com",
+					Order:       4,
+				},
+				"status": {
+					DisplayName: "Status",
+					Required:    true,
+					Description: "Status of the user",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "Active",
+					Order:       5,
+				},
+				"role": {
+					DisplayName: "Role",
+					Required:    true,
+					Description: "Role of the user",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "Admin",
+					Order:       6,
+				},
+			},
+		},
 	}, nil
 }
 

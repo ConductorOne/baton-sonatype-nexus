@@ -6,9 +6,11 @@ import (
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
+	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
+
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 )
 
@@ -115,4 +117,140 @@ func newUserBuilder(client *client.APIClient) *userBuilder {
 	return &userBuilder{
 		client: client,
 	}
+}
+
+func (b *userBuilder) CreateAccountCapabilityDetails(
+	_ context.Context,
+) (*v2.CredentialDetailsAccountProvisioning, annotations.Annotations, error) {
+	return &v2.CredentialDetailsAccountProvisioning{
+		SupportedCredentialOptions: []v2.CapabilityDetailCredentialOption{
+			v2.CapabilityDetailCredentialOption_CAPABILITY_DETAIL_CREDENTIAL_OPTION_RANDOM_PASSWORD,
+		},
+		PreferredCredentialOption: v2.CapabilityDetailCredentialOption_CAPABILITY_DETAIL_CREDENTIAL_OPTION_RANDOM_PASSWORD,
+	}, nil, nil
+}
+
+func (o *userBuilder) CreateAccount(
+	ctx context.Context,
+	accountInfo *v2.AccountInfo,
+	credentialOptions *v2.CredentialOptions,
+) (
+	connectorbuilder.CreateAccountResponse,
+	[]*v2.PlaintextData,
+	annotations.Annotations,
+	error,
+) {
+	profile := accountInfo.GetProfile().AsMap()
+
+	userId, ok := profile["userId"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("missing or invalid 'userId' in profile")
+	}
+
+	firstName, ok := profile["firstName"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("missing or invalid 'firstName' in profile")
+	}
+
+	lastName, ok := profile["lastName"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("missing or invalid 'lastName' in profile")
+	}
+
+	emailAddress, ok := profile["emailAddress"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("missing or invalid 'emailAddress' in profile")
+	}
+
+	status, ok := profile["status"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("missing or invalid 'status' in profile")
+	}
+
+	role, ok := profile["role"].(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("missing or invalid 'role' in profile")
+	}
+
+	generatedPassword, err := generateCredentials(credentialOptions)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	payload := &client.UserCreatePayload{
+		UserID:       userId,
+		FirstName:    firstName,
+		LastName:     lastName,
+		EmailAddress: emailAddress,
+		Password:     generatedPassword,
+		Status:       status,
+		Roles:        []string{role},
+	}
+
+	createdUser, annotations, err := o.client.CreateUser(ctx, payload)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	resource, err := o.userToResource(createdUser)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create resource from user: %w", err)
+	}
+
+	response := &v2.CreateAccountResponse_SuccessResult{
+		Resource:              resource,
+		IsCreateAccountResult: true,
+	}
+
+	plaintextData := []*v2.PlaintextData{
+		{
+			Name:        "password",
+			Description: "Generated password for the new user",
+			Bytes:       []byte(generatedPassword),
+		},
+	}
+
+	return response, plaintextData, annotations, nil
+}
+
+func (o *userBuilder) userToResource(user *client.User) (*v2.Resource, error) {
+	displayName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+
+	profile := map[string]interface{}{
+		"user_id":    user.UserID,
+		"email":      user.EmailAddress,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"status":     user.Status,
+		"source":     user.Source,
+	}
+
+	userTraits := []resource.UserTraitOption{
+		resource.WithUserProfile(profile),
+		resource.WithEmail(user.EmailAddress, true),
+	}
+
+	userResource, err := resource.NewUserResource(
+		displayName,
+		userResourceType,
+		user.UserID,
+		userTraits,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating user resource: %w", err)
+	}
+
+	return userResource, nil
+}
+
+func (o *userBuilder) Delete(ctx context.Context, resourceId *v2.ResourceId) (annotations.Annotations, error) {
+	if resourceId.ResourceType != userResourceType.Id {
+		return nil, fmt.Errorf("baton-sonatype-nexus: non-user resource passed to user delete")
+	}
+	_, err := o.client.DeleteUser(ctx, resourceId.Resource)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	return nil, nil
 }

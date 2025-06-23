@@ -27,7 +27,7 @@ func (e *NexusErrorResponse) Message() string {
 }
 
 // doRequest executes an HTTP request and processes the response.
-func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, res any) (http.Header, annotations.Annotations, error) {
+func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, reqBody, res any) (http.Header, annotations.Annotations, error) {
 	logger := ctxzap.Extract(ctx)
 
 	urlAddress, err := url.Parse(endpointUrl)
@@ -40,6 +40,10 @@ func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, r
 		uhttp.WithAcceptJSONHeader(),
 	}
 
+	if reqBody != nil {
+		options = append(options, uhttp.WithJSONBody(reqBody))
+	}
+
 	request, err := c.wrapper.NewRequest(ctx, method, urlAddress, options...)
 	if err != nil {
 		logger.Error("failed to create request", zap.Error(err))
@@ -49,9 +53,12 @@ func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, r
 	var errorResp NexusErrorResponse
 	var rateLimitDesc v2.RateLimitDescription
 	doOptions := []uhttp.DoOption{
-		uhttp.WithJSONResponse(res),
 		uhttp.WithErrorResponse(&errorResp),
 		uhttp.WithRatelimitData(&rateLimitDesc),
+	}
+
+	if res != nil {
+		doOptions = append(doOptions, uhttp.WithJSONResponse(res))
 	}
 
 	resp, err := c.wrapper.Do(request, doOptions...)
@@ -100,6 +107,22 @@ func NewClient(ctx context.Context, baseURL, username, password string, httpClie
 	}, nil
 }
 
+// CreateUser creates a new user in Nexus.
+func (c *APIClient) CreateUser(ctx context.Context, payload *UserCreatePayload) (*User, annotations.Annotations, error) {
+	l := ctxzap.Extract(ctx)
+
+	var createdUser User
+	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users", c.baseURL)
+
+	_, annotation, err := c.doRequest(ctx, http.MethodPost, queryUrl, payload, &createdUser)
+	if err != nil {
+		l.Error("Error creating user", zap.Error(err))
+		return nil, nil, err
+	}
+
+	return &createdUser, annotation, nil
+}
+
 // ListUsers retrieves a list of users from the API.
 // https://help.sonatype.com/en/api-reference.html#operations-tag-Security%20management:%20users .
 func (c *APIClient) ListUsers(ctx context.Context) ([]*User, annotations.Annotations, error) {
@@ -108,7 +131,7 @@ func (c *APIClient) ListUsers(ctx context.Context) ([]*User, annotations.Annotat
 	var users []*User
 	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users", c.baseURL)
 
-	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, &users)
+	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &users)
 	if err != nil {
 		l.Error("Error getting users", zap.Error(err))
 		return nil, nil, err
@@ -118,17 +141,47 @@ func (c *APIClient) ListUsers(ctx context.Context) ([]*User, annotations.Annotat
 }
 
 // ListRoles returns a list of all roles in Nexus.
-func (c *APIClient) ListRoles(ctx context.Context) ([]*Role, annotations.Annotations, error) {
+func (c *APIClient) ListRoles(ctx context.Context) ([]Role, annotations.Annotations, error) {
 	l := ctxzap.Extract(ctx)
 
-	var roles []*Role
+	var roles []Role
 	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/roles", c.baseURL)
 
-	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, &roles)
+	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &roles)
 	if err != nil {
 		l.Error("Error getting roles", zap.Error(err))
 		return nil, nil, err
 	}
 
 	return roles, annotation, nil
+}
+
+// DeleteUser deletes a user in Nexus.
+func (c *APIClient) DeleteUser(ctx context.Context, userID string) (annotations.Annotations, error) {
+	l := ctxzap.Extract(ctx)
+
+	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users/%s", c.baseURL, url.PathEscape(userID))
+
+	_, annotation, err := c.doRequest(ctx, http.MethodDelete, queryUrl, nil, nil)
+	if err != nil {
+		l.Error("Error deleting user", zap.String("user_id", userID), zap.Error(err))
+		return nil, err
+	}
+
+	return annotation, nil
+}
+
+// UpdateUser updates a user in Nexus.
+func (c *APIClient) UpdateUser(ctx context.Context, userID string, payload *User) (annotations.Annotations, error) {
+	l := ctxzap.Extract(ctx)
+
+	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users/%s", c.baseURL, url.PathEscape(userID))
+
+	_, annotation, err := c.doRequest(ctx, http.MethodPut, queryUrl, payload, nil)
+	if err != nil {
+		l.Error("Error updating user", zap.String("user_id", userID), zap.Error(err))
+		return nil, err
+	}
+
+	return annotation, nil
 }
