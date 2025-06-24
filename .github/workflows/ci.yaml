@@ -89,12 +89,6 @@ jobs:
 
       - name: Run tests
         run: go test -v ./...
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker stop nexus-test || true
-          docker rm nexus-test || true
         
       - name: Create test user
         run: |
@@ -123,3 +117,9 @@ jobs:
         run: |
           ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
             && baton grants --entitlement="role:nx-admin:assigned" --output-format=json | jq --exit-status 'if .grants then .grants[]?.principal.id.resource != "ci-test-user" else . end'
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop nexus-test || true
+          docker rm nexus-test || true
