@@ -96,6 +96,10 @@ jobs:
             --create-account-profile='{"userId":"ci-test-user", "firstName":"ci", "lastName":"test", "emailAddress":"ci-test-user@example.com", "status":"active", "role":"nx-anonymous"}' \
             --provisioning --create-account-login=ci-test-user@example.com --create-account-email=ci-test-user@example.com
 
+      - name: Run baton-sonatype-nexus
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}"
+
       - name: Assign nx-admin role to user
         run: |
           ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
@@ -107,6 +111,10 @@ jobs:
         run: |
           ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
             && baton grants --entitlement="role:nx-admin:assigned" --output-format=json | jq --exit-status '.grants[].principal.id.resource == "ci-test-user"'
+
+      - name: Run baton-sonatype-nexus
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}"
 
       - name: Revoke nx-admin role from user
         run: |
