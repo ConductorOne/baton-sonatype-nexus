@@ -95,10 +95,9 @@ func (o *roleBuilder) Grant(ctx context.Context, principal *v2.Resource, entitle
 	userId := principal.Id.Resource
 	roleId := entitlement.Resource.Id.Resource
 
-	// List all users to find the one we want to update
-	users, _, err := o.client.ListUsers(ctx)
+	users, _, err := o.client.ListUsersByID(ctx, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %w", err)
+		return nil, fmt.Errorf("failed to list users by id: %w", err)
 	}
 
 	var targetUser *client.User
@@ -136,9 +135,9 @@ func (o *roleBuilder) Revoke(ctx context.Context, grant *v2.Grant) (annotations.
 	userId := grant.Principal.Id.Resource
 	roleId := grant.Entitlement.Resource.Id.Resource
 
-	users, _, err := o.client.ListUsers(ctx)
+	users, _, err := o.client.ListUsersByID(ctx, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %w", err)
+		return nil, fmt.Errorf("failed to list users by id: %w", err)
 	}
 
 	var targetUser *client.User

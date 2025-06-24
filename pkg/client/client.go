@@ -117,7 +117,7 @@ func (c *APIClient) CreateUser(ctx context.Context, payload *UserCreatePayload) 
 	_, annotation, err := c.doRequest(ctx, http.MethodPost, queryUrl, payload, &createdUser)
 	if err != nil {
 		l.Error("Error creating user", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error creating user: %w", err)
 	}
 
 	return &createdUser, annotation, nil
@@ -134,7 +134,7 @@ func (c *APIClient) ListUsers(ctx context.Context) ([]*User, annotations.Annotat
 	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &users)
 	if err != nil {
 		l.Error("Error getting users", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error getting users: %w", err)
 	}
 
 	return users, annotation, nil
@@ -150,7 +150,7 @@ func (c *APIClient) ListRoles(ctx context.Context) ([]Role, annotations.Annotati
 	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &roles)
 	if err != nil {
 		l.Error("Error getting roles", zap.Error(err))
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error getting roles: %w", err)
 	}
 
 	return roles, annotation, nil
@@ -165,7 +165,7 @@ func (c *APIClient) DeleteUser(ctx context.Context, userID string) (annotations.
 	_, annotation, err := c.doRequest(ctx, http.MethodDelete, queryUrl, nil, nil)
 	if err != nil {
 		l.Error("Error deleting user", zap.String("user_id", userID), zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("error deleting user %s: %w", userID, err)
 	}
 
 	return annotation, nil
@@ -180,8 +180,23 @@ func (c *APIClient) UpdateUser(ctx context.Context, userID string, payload *User
 	_, annotation, err := c.doRequest(ctx, http.MethodPut, queryUrl, payload, nil)
 	if err != nil {
 		l.Error("Error updating user", zap.String("user_id", userID), zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("error updating user %s: %w", userID, err)
 	}
 
 	return annotation, nil
+}
+
+func (c *APIClient) ListUsersByID(ctx context.Context, userId string) ([]*User, annotations.Annotations, error) {
+	l := ctxzap.Extract(ctx)
+
+	var users []*User
+	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users?userId=%s", c.baseURL, userId)
+
+	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &users)
+	if err != nil {
+		l.Error("Error getting users by ID", zap.Error(err))
+		return nil, nil, fmt.Errorf("error getting users by ID %s: %w", userId, err)
+	}
+
+	return users, annotation, nil
 }
