@@ -163,14 +163,11 @@ func (o *userBuilder) CreateAccount(
 	}
 
 	status, ok := profile["status"].(string)
-	if !ok {
-		return nil, nil, nil, fmt.Errorf("missing or invalid 'status' in profile")
+	if !ok || status == "" {
+		status = "active"
 	}
 
-	role, ok := profile["role"].(string)
-	if !ok {
-		return nil, nil, nil, fmt.Errorf("missing or invalid 'role' in profile")
-	}
+	role := "nx-anonymous"
 
 	generatedPassword, err := generateCredentials(credentialOptions)
 	if err != nil {

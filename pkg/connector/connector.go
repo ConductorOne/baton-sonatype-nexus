@@ -62,7 +62,7 @@ func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error)
 					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
 						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
 					},
-					Placeholder: "Travolta",
+					Placeholder: "Doe",
 					Order:       3,
 				},
 				"emailAddress": {
@@ -77,23 +77,13 @@ func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error)
 				},
 				"status": {
 					DisplayName: "Status",
-					Required:    true,
+					Required:    false,
 					Description: "Status of the user",
 					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
 						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
 					},
 					Placeholder: "Active",
 					Order:       5,
-				},
-				"role": {
-					DisplayName: "Role",
-					Required:    true,
-					Description: "Role of the user",
-					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
-						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
-					},
-					Placeholder: "Admin",
-					Order:       6,
 				},
 			},
 		},

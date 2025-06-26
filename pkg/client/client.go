@@ -26,6 +26,8 @@ func (e *NexusErrorResponse) Message() string {
 	return e.ErrorMessage
 }
 
+const baseUsersEndpoint = "%s/service/rest/v1/security/users"
+
 // doRequest executes an HTTP request and processes the response.
 func (c *APIClient) doRequest(ctx context.Context, method, endpointUrl string, reqBody, res any) (http.Header, annotations.Annotations, error) {
 	logger := ctxzap.Extract(ctx)
@@ -112,7 +114,7 @@ func (c *APIClient) CreateUser(ctx context.Context, payload *UserCreatePayload) 
 	l := ctxzap.Extract(ctx)
 
 	var createdUser User
-	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users", c.baseURL)
+	queryUrl := fmt.Sprintf(baseUsersEndpoint, c.baseURL)
 
 	_, annotation, err := c.doRequest(ctx, http.MethodPost, queryUrl, payload, &createdUser)
 	if err != nil {
@@ -129,7 +131,7 @@ func (c *APIClient) ListUsers(ctx context.Context) ([]*User, annotations.Annotat
 	l := ctxzap.Extract(ctx)
 
 	var users []*User
-	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users", c.baseURL)
+	queryUrl := fmt.Sprintf(baseUsersEndpoint, c.baseURL)
 
 	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &users)
 	if err != nil {
@@ -160,7 +162,7 @@ func (c *APIClient) ListRoles(ctx context.Context) ([]Role, annotations.Annotati
 func (c *APIClient) DeleteUser(ctx context.Context, userID string) (annotations.Annotations, error) {
 	l := ctxzap.Extract(ctx)
 
-	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users/%s", c.baseURL, url.PathEscape(userID))
+	queryUrl := fmt.Sprintf(baseUsersEndpoint+"/%s", c.baseURL, url.PathEscape(userID))
 
 	_, annotation, err := c.doRequest(ctx, http.MethodDelete, queryUrl, nil, nil)
 	if err != nil {
@@ -175,7 +177,7 @@ func (c *APIClient) DeleteUser(ctx context.Context, userID string) (annotations.
 func (c *APIClient) UpdateUser(ctx context.Context, userID string, payload *User) (annotations.Annotations, error) {
 	l := ctxzap.Extract(ctx)
 
-	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users/%s", c.baseURL, url.PathEscape(userID))
+	queryUrl := fmt.Sprintf(baseUsersEndpoint+"/%s", c.baseURL, url.PathEscape(userID))
 
 	_, annotation, err := c.doRequest(ctx, http.MethodPut, queryUrl, payload, nil)
 	if err != nil {
@@ -190,7 +192,7 @@ func (c *APIClient) ListUsersByID(ctx context.Context, userId string) ([]*User, 
 	l := ctxzap.Extract(ctx)
 
 	var users []*User
-	queryUrl := fmt.Sprintf("%s/service/rest/v1/security/users?userId=%s", c.baseURL, userId)
+	queryUrl := fmt.Sprintf(baseUsersEndpoint+"?userId=%s", c.baseURL, userId)
 
 	_, annotation, err := c.doRequest(ctx, http.MethodGet, queryUrl, nil, &users)
 	if err != nil {
