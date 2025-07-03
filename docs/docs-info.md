@@ -65,3 +65,13 @@ While developing the connector, please fill out this form. This information is n
 - There is no endpoint to get a single user by ID; to update or find a user, the connector first lists all users and then filters by ID.
 - **Important:** When creating a user, you **must assign at least one role**. The Nexus API requires every user to have at least one role at creation time.
 
+**Default values and technical notes for account creation:**
+
+- For the `status` field, the default is `active`.
+  **Available options:**
+  - `active`: user is enabled and can authenticate
+  - `disabled`: user is disabled and cannot authenticate
+  - `changepassword`: user must change password at next login
+
+- The `role` field is not requested during account creation; by default, the user is assigned the `nx-anonymous` role.
+
