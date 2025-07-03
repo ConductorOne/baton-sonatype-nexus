@@ -50,6 +50,9 @@ jobs:
         with:
           go-version: 1.22.x
 
+      - name: Install baton
+        run: ./scripts/get-baton.sh && mv baton /usr/local/bin
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -89,6 +92,42 @@ jobs:
 
       - name: Run tests
         run: go test -v ./...
+        
+      - name: Create test user
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
+            --create-account-profile='{"userId":"ci-test-user", "firstName":"ci", "lastName":"test", "emailAddress":"ci-test-user@example.com", "status":"active", "role":"nx-anonymous"}' \
+            --provisioning --create-account-login=ci-test-user@example.com --create-account-email=ci-test-user@example.com
+
+      - name: Run baton-sonatype-nexus
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}"
+
+      - name: Assign nx-admin role to user
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
+            --grant-entitlement="role:nx-admin:assigned" \
+            --grant-principal="ci-test-user" \
+            --grant-principal-type="user"
+
+      - name: Verify that the user has the nx-admin role
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
+            && baton grants --entitlement="role:nx-admin:assigned" --output-format=json | jq --exit-status '.grants[].principal.id.resource == "ci-test-user"'
+
+      - name: Run baton-sonatype-nexus
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}"
+
+      - name: Revoke nx-admin role from user
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
+            --revoke-grant="role:nx-admin:assigned:user:ci-test-user"
+
+      - name: Verify that the user no longer has the nx-admin role
+        run: |
+          ./baton-sonatype-nexus --host="http://localhost:8081" --username="admin" --password="${{ steps.nexus-password.outputs.password }}" \
+            && baton grants --entitlement="role:nx-admin:assigned" --output-format=json | jq --exit-status 'if .grants then .grants[]?.principal.id.resource != "ci-test-user" else . end'
 
       - name: Cleanup
         if: always()

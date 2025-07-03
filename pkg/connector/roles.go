@@ -10,6 +10,8 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 )
 
 type roleBuilder struct {
@@ -76,4 +78,100 @@ func newRoleBuilder(client *client.APIClient) *roleBuilder {
 	return &roleBuilder{
 		client: client,
 	}
+}
+
+func (o *roleBuilder) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) (annotations.Annotations, error) {
+	l := ctxzap.Extract(ctx)
+
+	if principal.Id.ResourceType != userResourceType.Id {
+		l.Warn(
+			"baton-sonatype-nexus: only users can be granted roles",
+			zap.String("principal_type", principal.Id.ResourceType),
+			zap.String("principal_id", principal.Id.Resource),
+		)
+		return nil, fmt.Errorf("baton-sonatype-nexus: only users can be granted roles")
+	}
+
+	userId := principal.Id.Resource
+	roleId := entitlement.Resource.Id.Resource
+
+	users, _, err := o.client.ListUsersByID(ctx, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users by id: %w", err)
+	}
+
+	var targetUser *client.User
+	for _, u := range users {
+		if u.UserID == userId {
+			targetUser = u
+			break
+		}
+	}
+
+	if targetUser == nil {
+		return nil, fmt.Errorf("user %s not found", userId)
+	}
+
+	// Check if the user already has the role
+	for _, existingRole := range targetUser.Roles {
+		if existingRole == roleId {
+			return annotations.New(&v2.GrantAlreadyExists{}), nil
+		}
+	}
+
+	// Add the new role to the user's roles
+	targetUser.Roles = append(targetUser.Roles, roleId)
+
+	// Update the user in Nexus
+	_, err = o.client.UpdateUser(ctx, userId, targetUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user roles: %w", err)
+	}
+
+	return nil, nil
+}
+
+func (o *roleBuilder) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
+	userId := grant.Principal.Id.Resource
+	roleId := grant.Entitlement.Resource.Id.Resource
+
+	users, _, err := o.client.ListUsersByID(ctx, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users by id: %w", err)
+	}
+
+	var targetUser *client.User
+	for _, u := range users {
+		if u.UserID == userId {
+			targetUser = u
+			break
+		}
+	}
+
+	if targetUser == nil {
+		return nil, fmt.Errorf("user %s not found", userId)
+	}
+
+	found := false
+	newRoles := make([]string, 0, len(targetUser.Roles))
+	for _, r := range targetUser.Roles {
+		if r == roleId {
+			found = true
+			continue // we don't add it, so it's removed.
+		}
+		newRoles = append(newRoles, r)
+	}
+
+	if !found {
+		return annotations.New(&v2.GrantAlreadyRevoked{}), nil
+	}
+
+	targetUser.Roles = newRoles
+
+	_, err = o.client.UpdateUser(ctx, userId, targetUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user roles: %w", err)
+	}
+
+	return nil, nil
 }
