@@ -1,8 +1,16 @@
 {
   "fields": [
     {
-      "name": "configField",
-      "stringField": {}
+      "name": "host",
+      "displayName": "Host URL",
+      "description": "Nexus host URL",
+      "isRequired": true,
+      "stringField": {
+        "defaultValue": "http://localhost:8081",
+        "rules": {
+          "isRequired": true
+        }
+      }
     },
     {
       "name": "log-level",
@@ -47,7 +55,32 @@
       "description": "Disable OpenTelemetry tracing",
       "isOps": true,
       "boolField": {}
+    },
+    {
+      "name": "password",
+      "displayName": "Password",
+      "description": "Nexus password",
+      "isRequired": true,
+      "isSecret": true,
+      "stringField": {
+        "rules": {
+          "isRequired": true
+        }
+      }
+    },
+    {
+      "name": "username",
+      "displayName": "Username",
+      "description": "Nexus username",
+      "isRequired": true,
+      "stringField": {
+        "rules": {
+          "isRequired": true
+        }
+      }
     }
   ],
-  "displayName": "Sonatype Nexus"
+  "displayName": "Sonatype Nexus",
+  "helpUrl": "/docs/baton/sonatype-nexus",
+  "iconUrl": "/static/app-icons/sonatype-nexus.svg"
 }
