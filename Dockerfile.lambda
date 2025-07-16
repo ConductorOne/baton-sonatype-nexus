@@ -1,0 +1,3 @@
+FROM public.ecr.aws/lambda/provided:al2023
+ENTRYPOINT ["/baton-sonatype-nexus", "lambda"]
+COPY baton-sonatype-nexus /
