@@ -9,7 +9,7 @@ type SonatypeNexus struct {
 	Password string `mapstructure:"password"`
 }
 
-func (c* SonatypeNexus) findFieldByTag(tagValue string) (any, bool) {
+func (c *SonatypeNexus) findFieldByTag(tagValue string) (any, bool) {
 	v := reflect.ValueOf(c).Elem() // Dereference pointer to struct
 	t := v.Type()
 
@@ -41,11 +41,13 @@ func (c *SonatypeNexus) GetString(fieldName string) string {
 	if !ok {
 		return ""
 	}
-	t, ok := v.(string)
-	if !ok {
-		panic("wrong type")
+	if t, ok := v.(string); ok {
+		return t
 	}
-	return t
+	if t, ok := v.([]byte); ok {
+		return string(t)
+	}
+	panic("wrong type")
 }
 
 func (c *SonatypeNexus) GetInt(fieldName string) int {

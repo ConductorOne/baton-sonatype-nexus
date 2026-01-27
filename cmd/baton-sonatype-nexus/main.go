@@ -9,6 +9,7 @@ import (
 
 	"github.com/conductorone/baton-sdk/pkg/config"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
+	"github.com/conductorone/baton-sdk/pkg/connectorrunner"
 	"github.com/conductorone/baton-sdk/pkg/field"
 	"github.com/conductorone/baton-sdk/pkg/types"
 	cfg "github.com/conductorone/baton-sonatype-nexus/pkg/config"
@@ -27,6 +28,7 @@ func main() {
 		"baton-sonatype-nexus",
 		getConnector,
 		cfg.Config,
+		connectorrunner.WithDefaultCapabilitiesConnectorBuilder(&connector.Connector{}),
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
