@@ -1,6 +1,6 @@
 ![Baton Logo](./baton-logo.png)
 
-# `baton-sonatype-nexus` [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-sonatype-nexus.svg)](https://pkg.go.dev/github.com/conductorone/baton-sonatype-nexus) ![main ci](https://github.com/conductorone/baton-sonatype-nexus/actions/workflows/main.yaml/badge.svg)
+# `baton-sonatype-nexus` [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-sonatype-nexus.svg)](https://pkg.go.dev/github.com/conductorone/baton-sonatype-nexus) ![ci](https://github.com/conductorone/baton-sonatype-nexus/actions/workflows/ci.yaml/badge.svg)
 
 `baton-sonatype-nexus` is a connector for built using the [Baton SDK](https://github.com/conductorone/baton-sdk).
 
