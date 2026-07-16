@@ -13,6 +13,7 @@ const (
 	mockRoleNxAdmin     = "nx-admin"
 	mockRoleNxAnonymous = "nx-anonymous"
 	mockSourceDefault   = "default"
+	mockFieldSource     = "source"
 )
 
 // Mock data for Nexus users.
@@ -23,7 +24,7 @@ var (
 			"firstName":     "Anonymous",
 			"lastName":      "User",
 			"emailAddress":  "anonymous@example.org",
-			"source":        mockSourceDefault,
+			mockFieldSource: mockSourceDefault,
 			"status":        "active",
 			"readOnly":      false,
 			"roles":         []string{mockRoleNxAnonymous},
@@ -34,7 +35,7 @@ var (
 			"firstName":     "Administrator",
 			"lastName":      "User",
 			"emailAddress":  "admin@example.org",
-			"source":        mockSourceDefault,
+			mockFieldSource: mockSourceDefault,
 			"status":        "changepassword",
 			"readOnly":      false,
 			"roles":         []string{mockRoleNxAdmin},
@@ -45,16 +46,16 @@ var (
 	// Mock data for Nexus roles.
 	Roles = []map[string]interface{}{
 		{
-			"id":          mockRoleNxAdmin,
-			"name":        mockRoleNxAdmin,
-			"description": "Administrator Role",
-			"source":      mockSourceDefault,
+			"id":            mockRoleNxAdmin,
+			"name":          mockRoleNxAdmin,
+			"description":   "Administrator Role",
+			mockFieldSource: mockSourceDefault,
 		},
 		{
-			"id":          mockRoleNxAnonymous,
-			"name":        mockRoleNxAnonymous,
-			"description": "Anonymous Role",
-			"source":      mockSourceDefault,
+			"id":            mockRoleNxAnonymous,
+			"name":          mockRoleNxAnonymous,
+			"description":   "Anonymous Role",
+			mockFieldSource: mockSourceDefault,
 		},
 	}
 )
