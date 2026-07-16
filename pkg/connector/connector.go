@@ -10,6 +10,11 @@ import (
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 )
 
+const (
+	profileFieldStatus = "status"
+	profileFieldSource = "source"
+)
+
 type Connector struct {
 	client *client.APIClient
 }
@@ -75,7 +80,7 @@ func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error)
 					Placeholder: "john.doe@example.com",
 					Order:       4,
 				},
-				"status": {
+				profileFieldStatus: {
 					DisplayName: "Status",
 					Required:    false,
 					Description: "Status of the user",
