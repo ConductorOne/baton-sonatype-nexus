@@ -34,12 +34,12 @@ func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 		displayName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 
 		profile := map[string]interface{}{
-			"user_id":    user.UserID,
-			"email":      user.EmailAddress,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"status":     user.Status,
-			"source":     user.Source,
+			"user_id":          user.UserID,
+			"email":            user.EmailAddress,
+			"first_name":       user.FirstName,
+			"last_name":        user.LastName,
+			profileFieldStatus: user.Status,
+			profileFieldSource: user.Source,
 		}
 
 		userTraits := []resource.UserTraitOption{
@@ -214,12 +214,12 @@ func (o *userBuilder) userToResource(user *client.User) (*v2.Resource, error) {
 	displayName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 
 	profile := map[string]interface{}{
-		"user_id":    user.UserID,
-		"email":      user.EmailAddress,
-		"first_name": user.FirstName,
-		"last_name":  user.LastName,
-		"status":     user.Status,
-		"source":     user.Source,
+		"user_id":          user.UserID,
+		"email":            user.EmailAddress,
+		"first_name":       user.FirstName,
+		"last_name":        user.LastName,
+		profileFieldStatus: user.Status,
+		profileFieldSource: user.Source,
 	}
 
 	userTraits := []resource.UserTraitOption{

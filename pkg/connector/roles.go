@@ -31,10 +31,10 @@ func (o *roleBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 	var resources []*v2.Resource
 	for _, role := range roles {
 		profile := map[string]interface{}{
-			"role_id":     role.ID,
-			"source":      role.Source,
-			"description": role.Description,
-			"name":        role.Name,
+			"role_id":          role.ID,
+			profileFieldSource: role.Source,
+			"description":      role.Description,
+			"name":             role.Name,
 		}
 
 		roleTraits := []resource.RoleTraitOption{

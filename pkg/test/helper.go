@@ -9,6 +9,12 @@ import (
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 )
 
+const (
+	mockRoleNxAdmin     = "nx-admin"
+	mockRoleNxAnonymous = "nx-anonymous"
+	mockSourceDefault   = "default"
+)
+
 // Mock data for Nexus users.
 var (
 	Users = []map[string]interface{}{
@@ -17,10 +23,10 @@ var (
 			"firstName":     "Anonymous",
 			"lastName":      "User",
 			"emailAddress":  "anonymous@example.org",
-			"source":        "default",
+			"source":        mockSourceDefault,
 			"status":        "active",
 			"readOnly":      false,
-			"roles":         []string{"nx-anonymous"},
+			"roles":         []string{mockRoleNxAnonymous},
 			"externalRoles": []string{},
 		},
 		{
@@ -28,10 +34,10 @@ var (
 			"firstName":     "Administrator",
 			"lastName":      "User",
 			"emailAddress":  "admin@example.org",
-			"source":        "default",
+			"source":        mockSourceDefault,
 			"status":        "changepassword",
 			"readOnly":      false,
-			"roles":         []string{"nx-admin"},
+			"roles":         []string{mockRoleNxAdmin},
 			"externalRoles": []string{},
 		},
 	}
@@ -39,16 +45,16 @@ var (
 	// Mock data for Nexus roles.
 	Roles = []map[string]interface{}{
 		{
-			"id":          "nx-admin",
-			"name":        "nx-admin",
+			"id":          mockRoleNxAdmin,
+			"name":        mockRoleNxAdmin,
 			"description": "Administrator Role",
-			"source":      "default",
+			"source":      mockSourceDefault,
 		},
 		{
-			"id":          "nx-anonymous",
-			"name":        "nx-anonymous",
+			"id":          mockRoleNxAnonymous,
+			"name":        mockRoleNxAnonymous,
 			"description": "Anonymous Role",
-			"source":      "default",
+			"source":      mockSourceDefault,
 		},
 	}
 )
