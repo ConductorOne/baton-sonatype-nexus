@@ -37,15 +37,14 @@ func (o *roleBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 			"name":             role.Name,
 		}
 
-		roleTraits := []resource.RoleTraitOption{
-			resource.WithRoleProfile(profile),
-		}
+		roleTraits := []resource.RoleTraitOption{}
 
 		roleResource, err := resource.NewRoleResource(
 			role.ID,
 			roleResourceType,
 			role.Name,
 			roleTraits,
+			resource.WithResourceProfile(profile),
 		)
 		if err != nil {
 			return nil, "", nil, fmt.Errorf("error creating role resource: %w", err)

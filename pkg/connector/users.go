@@ -43,7 +43,6 @@ func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 		}
 
 		userTraits := []resource.UserTraitOption{
-			resource.WithUserProfile(profile),
 			resource.WithEmail(user.EmailAddress, true),
 		}
 
@@ -52,6 +51,7 @@ func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 			userResourceType,
 			user.UserID,
 			userTraits,
+			resource.WithResourceProfile(profile),
 		)
 		if err != nil {
 			return nil, "", nil, fmt.Errorf("error creating user resource: %w", err)
@@ -223,7 +223,6 @@ func (o *userBuilder) userToResource(user *client.User) (*v2.Resource, error) {
 	}
 
 	userTraits := []resource.UserTraitOption{
-		resource.WithUserProfile(profile),
 		resource.WithEmail(user.EmailAddress, true),
 	}
 
@@ -232,6 +231,7 @@ func (o *userBuilder) userToResource(user *client.User) (*v2.Resource, error) {
 		userResourceType,
 		user.UserID,
 		userTraits,
+		resource.WithResourceProfile(profile),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user resource: %w", err)
