@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/conductorone/baton-sdk/pkg/types/resource"
+
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +39,7 @@ func TestUserBuilderList(t *testing.T) {
 
 	u := newUserBuilder(c)
 
-	res, _, _, err := u.List(ctx, parentResourceID, nil)
+	res, _, err := u.List(ctx, parentResourceID, resource.SyncOpAttrs{})
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -49,7 +51,7 @@ func TestRoleBuilderList(t *testing.T) {
 
 	r := newRoleBuilder(c)
 
-	res, _, _, err := r.List(ctx, parentResourceID, nil)
+	res, _, err := r.List(ctx, parentResourceID, resource.SyncOpAttrs{})
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -62,7 +64,7 @@ func TestUserBuilderGrants(t *testing.T) {
 	u := newUserBuilder(c)
 
 	// First get users
-	users, _, _, err := u.List(ctx, parentResourceID, nil)
+	users, _, err := u.List(ctx, parentResourceID, resource.SyncOpAttrs{})
 	assert.Nil(t, err)
 	assert.NotNil(t, users)
 
@@ -72,7 +74,7 @@ func TestUserBuilderGrants(t *testing.T) {
 
 	// Test grants for the first user
 	user := users[0]
-	grants, _, _, err := u.Grants(ctx, user, nil)
+	grants, _, err := u.Grants(ctx, user, resource.SyncOpAttrs{})
 	assert.Nil(t, err)
 	assert.NotNil(t, grants)
 
@@ -85,7 +87,7 @@ func TestRoleBuilderEntitlements(t *testing.T) {
 	r := newRoleBuilder(c)
 
 	// First get roles
-	roles, _, _, err := r.List(ctx, parentResourceID, nil)
+	roles, _, err := r.List(ctx, parentResourceID, resource.SyncOpAttrs{})
 	assert.Nil(t, err)
 	assert.NotNil(t, roles)
 
@@ -95,7 +97,7 @@ func TestRoleBuilderEntitlements(t *testing.T) {
 
 	// Test entitlements for the first role
 	role := roles[0]
-	entitlements, _, _, err := r.Entitlements(ctx, role, nil)
+	entitlements, _, err := r.Entitlements(ctx, role, resource.SyncOpAttrs{})
 	assert.Nil(t, err)
 	assert.NotNil(t, entitlements)
 
