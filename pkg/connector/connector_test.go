@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/conductorone/baton-sdk/pkg/types/resource"
+
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/test"
 )
@@ -211,7 +213,7 @@ func TestUserBuilder_List(t *testing.T) {
 	userBuilder := newUserBuilder(testClient)
 
 	ctx := context.Background()
-	resources, _, _, err := userBuilder.List(ctx, nil, nil)
+	resources, _, err := userBuilder.List(ctx, nil, resource.SyncOpAttrs{})
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
