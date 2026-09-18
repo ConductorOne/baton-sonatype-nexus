@@ -7,7 +7,6 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
-	"github.com/conductorone/baton-sdk/pkg/pagination"
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 
@@ -23,10 +22,10 @@ func (o *userBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
 }
 
 // List returns all the users from the database as resource objects.
-func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken resource.SyncOpAttrs) ([]*v2.Resource, *resource.SyncOpResults, error) {
 	users, annos, err := o.client.ListUsers(ctx)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	var resources []*v2.Resource
@@ -54,32 +53,32 @@ func (o *userBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 			resource.WithResourceProfile(profile),
 		)
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("error creating user resource: %w", err)
+			return nil, nil, fmt.Errorf("error creating user resource: %w", err)
 		}
 
 		resources = append(resources, userResource)
 	}
 
-	return resources, "", annos, nil
+	return resources, &resource.SyncOpResults{Annotations: annos}, nil
 }
 
 // Entitlements always returns an empty slice for users.
-func (o *userBuilder) Entitlements(ctx context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
-	return nil, "", nil, nil
+func (o *userBuilder) Entitlements(ctx context.Context, res *v2.Resource, _ resource.SyncOpAttrs) ([]*v2.Entitlement, *resource.SyncOpResults, error) {
+	return nil, nil, nil
 }
 
 // Grants returns the roles assigned to a user as grants.
-func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
+func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ resource.SyncOpAttrs) ([]*v2.Grant, *resource.SyncOpResults, error) {
 	userID := res.Id.Resource
 
 	users, _, err := o.client.ListUsers(ctx)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	roles, _, err := o.client.ListRoles(ctx)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	var user *client.User
@@ -90,7 +89,7 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 		}
 	}
 	if user == nil {
-		return nil, "", nil, nil
+		return nil, nil, nil
 	}
 
 	var grants []*v2.Grant
@@ -110,7 +109,7 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 		}
 	}
 
-	return grants, "", nil, nil
+	return grants, &resource.SyncOpResults{}, nil
 }
 
 func newUserBuilder(client *client.APIClient) *userBuilder {
