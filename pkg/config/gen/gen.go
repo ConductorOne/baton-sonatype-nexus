@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	config.Generate("sonatype-nexus", cfg.Config)
+	config.Generate("sonatype-nexus", cfg.Configuration)
 }
