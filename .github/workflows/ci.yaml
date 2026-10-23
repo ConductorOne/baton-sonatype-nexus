@@ -19,7 +19,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install baton
-        run: ./scripts/get-baton.sh && mv baton /usr/local/bin
+        uses: ConductorOne/github-workflows/actions/get-baton@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
