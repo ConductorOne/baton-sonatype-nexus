@@ -2,12 +2,15 @@ package connector
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
+	"github.com/conductorone/baton-sdk/pkg/cli"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
+	cfgpkg "github.com/conductorone/baton-sonatype-nexus/pkg/config"
 )
 
 const (
@@ -20,8 +23,8 @@ type Connector struct {
 }
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
-func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
-	return []connectorbuilder.ResourceSyncer{
+func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncerV2 {
+	return []connectorbuilder.ResourceSyncerV2{
 		newUserBuilder(d.client),
 		newRoleBuilder(d.client),
 	}
@@ -102,12 +105,30 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, baseURL, username, password string) (*Connector, error) {
-	c, err := client.NewClient(ctx, baseURL, username, password, nil)
+// New returns a new instance of the connector.
+//
+// The *cli.ConnectorOpts parameter is part of the V2 entrypoint contract; it
+// carries runtime options such as the sync resource-type filter. It is accepted
+// but not yet read here.
+func New(ctx context.Context, cfg *cfgpkg.SonatypeNexus, _ *cli.ConnectorOpts) (connectorbuilder.ConnectorBuilderV2, []connectorbuilder.Opt, error) {
+	host := cfg.GetString(cfgpkg.HostField.FieldName)
+	if host == "" {
+		return nil, nil, fmt.Errorf("host is required")
+	}
+	username := cfg.GetString(cfgpkg.UsernameField.FieldName)
+	if username == "" {
+		return nil, nil, fmt.Errorf("username is required")
+	}
+	password := cfg.GetString(cfgpkg.PasswordField.FieldName)
+	if password == "" {
+		return nil, nil, fmt.Errorf("password is required")
+	}
+
+	c, err := client.NewClient(ctx, host, username, password, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	return &Connector{
 		client: c,
-	}, nil
+	}, nil, nil
 }

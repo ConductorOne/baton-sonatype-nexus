@@ -6,7 +6,6 @@ import (
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
-	"github.com/conductorone/baton-sdk/pkg/pagination"
 	"github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	"github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-sonatype-nexus/pkg/client"
@@ -22,10 +21,10 @@ func (o *roleBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
 	return roleResourceType
 }
 
-func (o *roleBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (o *roleBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId, pToken resource.SyncOpAttrs) ([]*v2.Resource, *resource.SyncOpResults, error) {
 	roles, annos, err := o.client.ListRoles(ctx)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	var resources []*v2.Resource
@@ -47,30 +46,30 @@ func (o *roleBuilder) List(ctx context.Context, parentResourceID *v2.ResourceId,
 			resource.WithResourceProfile(profile),
 		)
 		if err != nil {
-			return nil, "", nil, fmt.Errorf("error creating role resource: %w", err)
+			return nil, nil, fmt.Errorf("error creating role resource: %w", err)
 		}
 
 		resources = append(resources, roleResource)
 	}
 
-	return resources, "", annos, nil
+	return resources, &resource.SyncOpResults{Annotations: annos}, nil
 }
 
-func (o *roleBuilder) Entitlements(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+func (o *roleBuilder) Entitlements(ctx context.Context, res *v2.Resource, pToken resource.SyncOpAttrs) ([]*v2.Entitlement, *resource.SyncOpResults, error) {
 	var entitlements []*v2.Entitlement
 
 	opts := []entitlement.EntitlementOption{
 		entitlement.WithGrantableTo(userResourceType),
-		entitlement.WithDescription(fmt.Sprintf("Membership to role: %s", resource.DisplayName)),
-		entitlement.WithDisplayName(fmt.Sprintf("Role: %s", resource.DisplayName)),
+		entitlement.WithDescription(fmt.Sprintf("Membership to role: %s", res.DisplayName)),
+		entitlement.WithDisplayName(fmt.Sprintf("Role: %s", res.DisplayName)),
 	}
 
-	entitlements = append(entitlements, entitlement.NewPermissionEntitlement(resource, "assigned", opts...))
-	return entitlements, "", nil, nil
+	entitlements = append(entitlements, entitlement.NewPermissionEntitlement(res, "assigned", opts...))
+	return entitlements, &resource.SyncOpResults{}, nil
 }
 
-func (o *roleBuilder) Grants(ctx context.Context, resource *v2.Resource, pToken *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	return nil, "", nil, nil
+func (o *roleBuilder) Grants(ctx context.Context, res *v2.Resource, pToken resource.SyncOpAttrs) ([]*v2.Grant, *resource.SyncOpResults, error) {
+	return nil, nil, nil
 }
 
 func newRoleBuilder(client *client.APIClient) *roleBuilder {
