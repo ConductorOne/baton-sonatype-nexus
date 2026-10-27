@@ -21,12 +21,12 @@ jobs:
           repositories: ${{ github.event.repository.name }}
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ steps.ci-token.outputs.token }}
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
 
@@ -37,7 +37,7 @@ jobs:
         run: ./connector config > config_schema.json
 
       - name: Run and save capabilities output
-        run: ./connector --host="localhost" --username="admin" --password="*****" capabilities > baton_capabilities.json
+        run: ./connector capabilities > baton_capabilities.json
 
       - name: Commit changes
         uses: EndBug/add-and-commit@v9
